@@ -1,0 +1,125 @@
+name: ML Pipeline - California Housing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  ml-pipeline:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install additional dependencies for GitHub Actions
+        pip install scipy  # Required for Q-Q plots in wandb_logger
+        
+    - name: Test WandB connection
+      env:
+        WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        WANDB_MODE: disabled  # Disable actual logging in CI
+      run: |
+        python -c "
+        import sys
+        sys.path.append('src')
+        from wandb_logger import WandBLogger
+        logger = WandBLogger()
+        success = logger.test_connection()
+        print(f'WandB connection test: {\"SUCCESS\" if success else \"FAILED\"}')
+        "
+        
+    - name: Test data loading
+      run: |
+        python -c "
+        import sys
+        sys.path.append('src')
+        from data_loader import load_california_housing
+        X, y = load_california_housing()
+        print(f'Data loaded successfully: {X.shape} features, {y.shape} targets')
+        "
+        
+    - name: Test data preprocessing
+      run: |
+        python -c "
+        import sys
+        sys.path.append('src')
+        from data_loader import load_california_housing
+        from preprocessing import preprocess_data
+        X, y = load_california_housing()
+        X_train, X_test, y_train, y_test, scaler = preprocess_data(X, y)
+        print(f'Preprocessing successful: Train {X_train.shape}, Test {X_test.shape}')
+        "
+        
+    - name: Test model training
+      run: |
+        python -c "
+        import sys
+        sys.path.append('src')
+        from data_loader import load_california_housing
+        from preprocessing import preprocess_data
+        from model import MLModel
+        X, y = load_california_housing()
+        X_train, X_test, y_train, y_test, scaler = preprocess_data(X, y)
+        model = MLModel('random_forest')
+        model.train(X_train, y_train)
+        metrics = model.evaluate(X_test, y_test)
+        print(f'Model training successful. R² score: {metrics[\"r2\"]:.4f}')
+        "
+        
+    - name: Run full ML pipeline
+      env:
+        WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        WANDB_MODE: disabled  # Disable actual logging in CI to avoid cluttering
+      run: |
+        python main.py
+        
+    - name: Upload model artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: trained-models
+        path: models/
+        retention-days: 30
+        
+    - name: Upload logs
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: pipeline-logs
+        path: ml_pipeline.log
+        retention-days: 7
+        
+    - name: Display pipeline summary
+      if: always()
+      run: |
+        echo "## ML Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Dataset**: California Housing (scikit-learn)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Model**: Random Forest Regressor" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ -f "ml_pipeline.log" ]; then
+          echo "### Log Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          tail -20 ml_pipeline.log >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        fi
