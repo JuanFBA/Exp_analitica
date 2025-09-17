@@ -41,7 +41,7 @@ def _apply_standardizer(x: torch.Tensor, mean: torch.Tensor, std: torch.Tensor):
 
 def preprocess_and_log(standardize: bool):
     with wandb.init(
-        project=os.getenv("WANDB_PROJECT", "MLOps-Pycon2023"),
+        project=os.getenv("WANDB_PROJECT", "Exp_Analitica"),
         entity=os.getenv("WANDB_ENTITY"),
         name=f"Preprocess Data ExecId-{args.IdExecution}",
         job_type="preprocess-data"
