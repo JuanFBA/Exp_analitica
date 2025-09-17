@@ -109,7 +109,7 @@ def evaluate(model, loader, criterion):
 # ---------------------------
 def train_and_log():
     with wandb.init(
-        project=os.getenv("WANDB_PROJECT", "MLOps-Pycon2023"),
+        project=os.getenv("WANDB_PROJECT", "Exp_Analitica"),
         entity=os.getenv("WANDB_ENTITY"),
         name=f"Train Model ExecId-{args.IdExecution}",
         job_type="train-model",
@@ -175,7 +175,7 @@ def train_and_log():
 
 def evaluate_and_log():
     with wandb.init(
-        project=os.getenv("WANDB_PROJECT", "MLOps-Pycon2023"),
+        project=os.getenv("WANDB_PROJECT", "Exp_Analitica"),
         entity=os.getenv("WANDB_ENTITY"),
         name=f"Eval Model ExecId-{args.IdExecution}",
         job_type="eval-model",
