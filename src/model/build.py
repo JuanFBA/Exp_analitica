@@ -55,7 +55,7 @@ os.makedirs("./models", exist_ok=True)
 # ---------------------------
 def build_model_and_log():
     with wandb.init(
-        project=os.getenv("WANDB_PROJECT", "MLOps-Pycon2023"),
+        project=os.getenv("WANDB_PROJECT", "Exp_Analitica"),
         entity=os.getenv("WANDB_ENTITY"),
         name=f"initialize Model ExecId-{args.IdExecution}",
         job_type="initialize-model",
