@@ -76,7 +76,7 @@ def load(train_size: float = 0.8, val_ratio: float = 0.2, seed: int = 42):
 def load_and_log():
     # 🚀 start a run, with a type to label it and a project it can call home
     with wandb.init(
-        project=os.getenv("WANDB_PROJECT", "MLOps-Pycon2023"),
+        project=os.getenv("WANDB_PROJECT", "Exp_Analitica"),
         entity=os.getenv("WANDB_ENTITY"),
         name=f"Load Raw Data ExecId-{args.IdExecution}",
         job_type="load-data",
