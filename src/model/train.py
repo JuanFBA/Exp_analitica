@@ -236,9 +236,7 @@ def evaluate_and_log():
             "test/r2": r2,
         })
 
-# ---------------------------
 #   Ejecución
-# ---------------------------
 if __name__ == "__main__":
     train_and_log()
     evaluate_and_log()
